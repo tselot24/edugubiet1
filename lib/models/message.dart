@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ignore: constant_identifier_names
-enum MessageType { Text, Image }
+enum MessageType { Text, Image, Video, File }
 
 class Message {
   String? senderID;

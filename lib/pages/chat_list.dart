@@ -1,6 +1,5 @@
 import 'package:chat_app/models/user_profile.dart';
 import 'package:chat_app/pages/chat_page.dart';
-import 'package:chat_app/services/alert_services.dart';
 import 'package:chat_app/services/auth_service.dart';
 import 'package:chat_app/services/database_service.dart';
 import 'package:chat_app/services/navigation_service.dart';
@@ -8,25 +7,23 @@ import 'package:chat_app/widgets/chat_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class ChatListPage extends StatefulWidget {
+  const ChatListPage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePgeState();
+  State<ChatListPage> createState() => _HomePgeState();
 }
 
-class _HomePgeState extends State<HomePage> {
+class _HomePgeState extends State<ChatListPage> {
   final GetIt _getIt = GetIt.instance;
   late AuthService _authService;
   late NavigationService _navigationService;
-  late AlertService _alertService;
   late DatabaseService _databaseService;
   @override
   void initState() {
     super.initState();
     _authService = _getIt.get<AuthService>();
     _navigationService = _getIt.get<NavigationService>();
-    _alertService = _getIt.get<AlertService>();
     _databaseService = _getIt.get<DatabaseService>();
   }
 
@@ -35,7 +32,8 @@ class _HomePgeState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Messages'),
-        actions: [
+        backgroundColor: Colors.blue,
+        /*  actions: [
           IconButton(
               onPressed: () async {
                 bool result = await _authService.logout();
@@ -47,7 +45,7 @@ class _HomePgeState extends State<HomePage> {
               },
               color: Colors.red,
               icon: const Icon(Icons.logout))
-        ],
+        ], */
       ),
       body: _buildUI(),
     );

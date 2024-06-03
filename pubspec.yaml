@@ -45,11 +45,16 @@ dependencies:
   get_it: ^7.7.0
   image_picker: ^1.1.0
   path: ^1.9.0
-
+  file_picker: ^8.0.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  image_path: "assets/icons/playstore.png"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -69,7 +74,11 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
+      - assets/images/lightbulb.jpg 
+      - assets/images/teacher.png
+      - assets/images/parent.png
+
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

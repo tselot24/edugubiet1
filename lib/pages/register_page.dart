@@ -53,10 +53,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget _buildUI() {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 15,
-          vertical: 20,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
         child: Column(
           children: [
             _headerText(),
@@ -109,8 +106,10 @@ class _RegisterPageState extends State<RegisterPage> {
           children: [
             _ppSelectionField(),
             CustomFormField(
+              icon: Icons.person,
               height: MediaQuery.sizeOf(context).height * 0.1,
-              hintText: "Name",
+              labelText: "Name",
+              hintText: 'E.g., "John Doe"',
               onSaved: (value) {
                 setState(() {
                   name = value;
@@ -119,8 +118,10 @@ class _RegisterPageState extends State<RegisterPage> {
               validationRegEx: NAME_VALIDATION_REGEX,
             ),
             CustomFormField(
+              icon: Icons.email,
               height: MediaQuery.sizeOf(context).height * 0.1,
-              hintText: "Email",
+              hintText: 'E.g., "example@domain.com"',
+              labelText: 'Email',
               onSaved: (value) {
                 setState(() {
                   email = value;
@@ -129,9 +130,11 @@ class _RegisterPageState extends State<RegisterPage> {
               validationRegEx: EMAIL_VALIDATION_REGEX,
             ),
             CustomFormField(
+              icon: Icons.remove_red_eye_rounded,
               obscureText: true,
               height: MediaQuery.sizeOf(context).height * 0.1,
-              hintText: "Password",
+              hintText: 'E.g., "My first furry friend"',
+              labelText: 'Password',
               onSaved: (value) {
                 setState(() {
                   password = value;
@@ -204,8 +207,6 @@ class _RegisterPageState extends State<RegisterPage> {
               }
             }
           } catch (e) {
-            // ignore: avoid_print
-            print(e);
             _alertService.showToast(
                 text: "Failed to register, Please try again",
                 icon: Icons.error);

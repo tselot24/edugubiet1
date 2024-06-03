@@ -22,7 +22,7 @@ class _LoginPageState extends State<LoginPage> {
   late NavigationService _navigationService;
   late AlertService _alertService;
   String? email, password;
-
+  bool isLoading = false;
   @override
   void initState() {
     super.initState();
@@ -47,7 +47,17 @@ class _LoginPageState extends State<LoginPage> {
           vertical: 20,
         ),
         child: Column(
-          children: [_headerText(), _loginForm(), _createAnAccountLink()],
+          children: [
+            _headerText(),
+            if (!isLoading) _loginForm(),
+            if (!isLoading) _createAnAccountLink(),
+            if (isLoading)
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -87,7 +97,9 @@ class _LoginPageState extends State<LoginPage> {
           mainAxisSize: MainAxisSize.max,
           children: [
             CustomFormField(
-              hintText: 'Email',
+              icon: Icons.email,
+              labelText: 'Email',
+              hintText: 'E.g., "example@domain.com"',
               height: MediaQuery.sizeOf(context).height * 0.1,
               validationRegEx: EMAIL_VALIDATION_REGEX,
               onSaved: (value) {
@@ -99,8 +111,10 @@ class _LoginPageState extends State<LoginPage> {
               },
             ),
             CustomFormField(
+              icon: Icons.remove_red_eye_rounded,
               obscureText: true,
-              hintText: 'Password',
+              hintText: 'E.g., "My first furry friend"',
+              labelText: 'Password',
               height: MediaQuery.sizeOf(context).height * 0.1,
               validationRegEx: PASSWORD_VALIDATION_REGEX,
               onSaved: (value) {
@@ -123,6 +137,9 @@ class _LoginPageState extends State<LoginPage> {
       width: MediaQuery.sizeOf(context).width,
       child: MaterialButton(
         onPressed: () async {
+          setState(() {
+            isLoading = true;
+          });
           if (_loginFormKey.currentState?.validate() ?? false) {
             _loginFormKey.currentState?.save();
             bool result = await _authService.login(email!, password!);
@@ -135,6 +152,9 @@ class _LoginPageState extends State<LoginPage> {
               );
             }
           }
+          setState(() {
+            isLoading = false;
+          });
         },
         color: Theme.of(context).colorScheme.primary,
         child: const Text(

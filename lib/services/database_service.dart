@@ -2,7 +2,6 @@ import 'package:chat_app/models/chat.dart';
 import 'package:chat_app/models/message.dart';
 import 'package:chat_app/models/user_profile.dart';
 import 'package:chat_app/services/auth_service.dart';
-import 'package:chat_app/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get_it/get_it.dart';
 
@@ -17,6 +16,7 @@ class DatabaseService {
     _authService = _getIt.get<AuthService>();
     _setupCollectionReferences();
   }
+
   void _setupCollectionReferences() {
     _usersCollection =
         _firebaseFirestore.collection('users').withConverter<UserProfile>(
@@ -46,7 +46,7 @@ class DatabaseService {
   }
 
   Future<bool> checkChatExists(String uid1, String uid2) async {
-    String chatID = generateChatId(uid1: uid1, uid2: uid2);
+    String chatID = getChatId(uid1: uid1, uid2: uid2);
     final result = await _chatsCollection?.doc(chatID).get();
     if (result != null) {
       return result.exists;
@@ -55,7 +55,7 @@ class DatabaseService {
   }
 
   Future<void> createNewChat(String uid1, String uid2) async {
-    String chatID = generateChatId(uid1: uid1, uid2: uid2);
+    String chatID = getChatId(uid1: uid1, uid2: uid2);
     final docRef = _chatsCollection!.doc(chatID);
     final chat = Chat(
       id: chatID,
@@ -67,7 +67,7 @@ class DatabaseService {
 
   Future<void> sendChatMessage(
       String uid1, String uid2, Message message) async {
-    String chatID = generateChatId(uid1: uid1, uid2: uid2);
+    String chatID = getChatId(uid1: uid1, uid2: uid2);
     final docRef = _chatsCollection!.doc(chatID);
     await docRef.update({
       "messages": FieldValue.arrayUnion(
@@ -79,8 +79,24 @@ class DatabaseService {
   }
 
   Stream<DocumentSnapshot<Chat>> getChatData(String uid1, String uid2) {
-    String chatID = generateChatId(uid1: uid1, uid2: uid2);
+    String chatID = getChatId(uid1: uid1, uid2: uid2);
     return _chatsCollection?.doc(chatID).snapshots()
         as Stream<DocumentSnapshot<Chat>>;
+  }
+
+  String getChatId({required String uid1, required String uid2}) {
+    return uid1.hashCode <= uid2.hashCode ? '$uid1-$uid2' : '$uid2-$uid1';
+  }
+
+  Future<void> updateUserProfilePhoto(String photoURL) async {
+    final user = _authService.user!;
+    await _usersCollection?.doc(user.uid).update({'photoURL': photoURL});
+  }
+
+  Future<void> deleteChatMessage(String chatID, Message message) async {
+    final docRef = _chatsCollection!.doc(chatID);
+    await docRef.update({
+      "messages": FieldValue.arrayRemove([message.toJson()])
+    });
   }
 }

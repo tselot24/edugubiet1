@@ -11,6 +11,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dash_chat_2/dash_chat_2.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../utils.dart';
 
@@ -97,19 +98,22 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _sendMessage(ChatMessage chatMessage) async {
     if (chatMessage.medias?.isNotEmpty ?? false) {
-      if (chatMessage.medias!.first.type == MediaType.image) {
-        Message message = Message(
-          senderID: chatMessage.user.id,
-          content: chatMessage.medias!.first.url,
-          messageType: MessageType.Image,
-          sentAt: Timestamp.fromDate(chatMessage.createdAt),
-        );
-        await _databaseService.sendChatMessage(
-          currentUser!.id,
-          otherUser!.id,
-          message,
-        );
-      }
+      MediaType mediaType = chatMessage.medias!.first.type;
+      Message message = Message(
+        senderID: chatMessage.user.id,
+        content: chatMessage.medias!.first.url,
+        messageType: mediaType == MediaType.image
+            ? MessageType.Image
+            : mediaType == MediaType.video
+                ? MessageType.Video
+                : MessageType.File,
+        sentAt: Timestamp.fromDate(chatMessage.createdAt),
+      );
+      await _databaseService.sendChatMessage(
+        currentUser!.id,
+        otherUser!.id,
+        message,
+      );
     } else {
       Message message = Message(
         senderID: currentUser!.id,
@@ -131,11 +135,28 @@ class _ChatPageState extends State<ChatPage> {
     List<ChatMessage> chatMessages = messages.map((m) {
       if (m.messageType == MessageType.Image) {
         return ChatMessage(
-            user: m.senderID == currentUser!.id ? currentUser! : otherUser!,
-            createdAt: m.sentAt!.toDate(),
-            medias: [
-              ChatMedia(url: m.content!, fileName: '', type: MediaType.image),
-            ]);
+          user: m.senderID == currentUser!.id ? currentUser! : otherUser!,
+          createdAt: m.sentAt!.toDate(),
+          medias: [
+            ChatMedia(url: m.content!, fileName: '', type: MediaType.image),
+          ],
+        );
+      } else if (m.messageType == MessageType.Video) {
+        return ChatMessage(
+          user: m.senderID == currentUser!.id ? currentUser! : otherUser!,
+          createdAt: m.sentAt!.toDate(),
+          medias: [
+            ChatMedia(url: m.content!, fileName: '', type: MediaType.video),
+          ],
+        );
+      } else if (m.messageType == MessageType.File) {
+        return ChatMessage(
+          user: m.senderID == currentUser!.id ? currentUser! : otherUser!,
+          createdAt: m.sentAt!.toDate(),
+          medias: [
+            ChatMedia(url: m.content!, fileName: '', type: MediaType.file),
+          ],
+        );
       } else {
         return ChatMessage(
           user: m.senderID == currentUser!.id ? currentUser! : otherUser!,
@@ -153,23 +174,39 @@ class _ChatPageState extends State<ChatPage> {
   Widget _mediaMessageButton() {
     return IconButton(
       onPressed: () async {
-        File? file = await _mediaService.getImageFromGallery();
-        if (file != null) {
-          String chatID = generateChatId(
-            uid1: currentUser!.id,
-            uid2: otherUser!.id,
-          );
+        FilePickerResult? result = await _mediaService.pickFile();
+        if (result != null && result.files.single.path != null) {
+          File file = File(result.files.single.path!);
+          String chatID = _databaseService.getChatId(
+              uid1: currentUser!.id, uid2: otherUser!.id);
 
-          String? downloadURL = await _storageService.uploadImageToChat(
-            file: file,
-            chatID: chatID,
-          );
+          String? downloadURL;
+          String fileType = _getFileType(result.files.single.extension!);
+
+          if (fileType == 'image') {
+            downloadURL = await _storageService.uploadImageToChat(
+                file: file, chatID: chatID);
+          } else if (fileType == 'video') {
+            downloadURL = await _storageService.uploadVideoToChat(
+                file: file, chatID: chatID);
+          } else {
+            downloadURL = await _storageService.uploadFileToChat(
+                file: file, chatID: chatID);
+          }
+
           if (downloadURL != null) {
             ChatMessage chatMessage = ChatMessage(
               user: currentUser!,
               createdAt: DateTime.now(),
               medias: [
-                ChatMedia(url: downloadURL, fileName: '', type: MediaType.image)
+                ChatMedia(
+                    url: downloadURL,
+                    fileName: result.files.single.name,
+                    type: fileType == 'image'
+                        ? MediaType.image
+                        : fileType == 'video'
+                            ? MediaType.video
+                            : MediaType.file),
               ],
             );
             _sendMessage(chatMessage);
@@ -177,9 +214,19 @@ class _ChatPageState extends State<ChatPage> {
         }
       },
       icon: Icon(
-        Icons.image,
+        Icons.attachment,
         color: Theme.of(context).colorScheme.primary,
       ),
     );
+  }
+
+  String _getFileType(String extension) {
+    if (['jpg', 'jpeg', 'png', 'gif'].contains(extension)) {
+      return 'image';
+    } else if (['mp4', 'avi', 'mov', 'wmv'].contains(extension)) {
+      return 'video';
+    } else {
+      return 'file';
+    }
   }
 }
